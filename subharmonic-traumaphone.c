@@ -41,6 +41,7 @@ struct sample_clip *make_raw_sample(int nsamples, float freq)
 		angle = (float) i * freq / (float) nsamples / (2.0 * M_PI);
 		s->s[i] = sin(angle);
 	}
+	return s;
 }
 
 #define NOCTAVES 8
@@ -67,6 +68,7 @@ struct sample_clip *make_freq_sample(struct sample_clip *input, int nsamples, fl
 		s->s[i] = sin_envelope(i, nsamples) * input->s[j];
 		j = (j + 1) % limit;
 	}
+	return s;
 }
 
 #define MAXVOICES 4 
