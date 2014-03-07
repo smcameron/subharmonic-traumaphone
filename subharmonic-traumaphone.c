@@ -13,7 +13,7 @@ static volatile int mousex;
 static volatile int mousey;
 static int real_screen_width = 800;
 static int real_screen_height = 600;
-static int frame_rate_hz = 30;
+static int frame_rate_hz = 60;
 
 struct sample_clip {
 	float *s;
@@ -25,6 +25,11 @@ void free_sample(struct sample_clip *s)
 	free(s->s);
 	s->s = NULL;
 	free(s);
+}
+
+float triangle(float angle)
+{
+	return angle / (M_PI * 2.0);
 }
 
 struct sample_clip *make_raw_sample(int nsamples, float freq)
@@ -39,7 +44,7 @@ struct sample_clip *make_raw_sample(int nsamples, float freq)
 
 	for (i = 0; i < nsamples; i++) {
 		angle = (float) i * freq / (float) nsamples / (2.0 * M_PI);
-		s->s[i] = sin(angle);
+		s->s[i] = triangle(angle);
 	}
 	return s;
 }
@@ -71,7 +76,7 @@ struct sample_clip *make_freq_sample(struct sample_clip *input, int nsamples, fl
 	return s;
 }
 
-#define MAXVOICES 4 
+#define MAXVOICES 32 
 
 struct voice {
 	volatile float freq;
@@ -83,7 +88,7 @@ struct voice {
 
 static void init_voices(void)
 {
-	int i, n;
+	int i;
 
 	for (i = 0; i < MAXVOICES; i++) {
 		v[i].freq = (((float) rand() / (float) RAND_MAX) * (MAXFREQ - MINFREQ) + MINFREQ);
@@ -93,21 +98,27 @@ static void init_voices(void)
 	}
 }
 
-float voice_sample(int voice, uint64_t time)
+void voice_sample(uint64_t time, unsigned long nframes, float *out)
 {
-	
-	float t = fmodf(time, v[voice].samples_per_period);
+	int i, j;
+	float output;
 
-	t = (t / (float) v[voice].samples_per_period) * M_PI * 2.0;
+	for (j = 0; j < nframes; j++) {
+		output = 0.0f;
+		for (i = 0; i < MAXVOICES; i++) {
+			float t = fmodf((float) time + (float) j, (float) v[i].samples_per_period);
 
-	t = 0.1f * sin(t + v[voice].phase);
-
-	/* smooth it out */
-	if (fabs(t - v[voice].lastv) > 0.05) {
-		t = v[voice].lastv + 0.05 * (t - v[voice].lastv);
-		v[voice].lastv = t;
+			t = (t / (float) v[i].samples_per_period) * M_PI * 2.0f;
+			t = 0.1f * sin(t + v[i].phase);
+			/* smooth it out */
+			if (fabs(t - v[i].lastv) > 0.02) {
+				t = v[i].lastv + 0.02 * (t - v[i].lastv);
+				v[i].lastv = t;
+			}
+			output += t;
+		}
+		*out++ = output; 
 	}
-	return t;
 }
 
 static int main_da_motion_notify(GtkWidget *w, GdkEventMotion *event,
@@ -116,7 +127,7 @@ static int main_da_motion_notify(GtkWidget *w, GdkEventMotion *event,
 	int i;
 	float r;
 	float f;
-	int o, n;
+	int n;
 
 	mousex = event->x;
 	mousey = event->y;
@@ -124,13 +135,12 @@ static int main_da_motion_notify(GtkWidget *w, GdkEventMotion *event,
 	for (i = 0; i < MAXVOICES; i++) {
 		r = ((float) rand() / (float) RAND_MAX) * MAXFREQ * 0.05;
 		r = r * (float) mousex / (float) real_screen_width;
-		n = (int) (((float) mousey / (float) real_screen_height) * 12.0f);
-		n = frequency[n];
-		o = (int) (((float) rand() / (float) RAND_MAX) * 5);
-		o = 1 << o;
-		f = f * (float) o + r;
+		//r = 0.0f;
+		n = (int) (((float) mousey / (float) real_screen_height) * 12.0f * (float) (NOCTAVES - 1));
+		f = frequency[n] + r;	
 		v[i].target_freq = f;
 	}
+	return 1;
 }
 
 gint advance_game(gpointer data)
@@ -138,9 +148,10 @@ gint advance_game(gpointer data)
 	int i;
 
 	for (i = 0; i < MAXVOICES; i++) {
-		v[i].freq += 0.09 * (v[i].target_freq - v[i].freq);
+		v[i].freq += 0.05 * (v[i].target_freq - v[i].freq);
 		v[i].samples_per_period = 44100.0f / v[i].freq;
 	}
+	return 1;
 }
 			
 int main(int argc, char *argv[])

@@ -173,7 +173,7 @@ error:
 	return -1;
 }
 
-extern float voice_sample(int voice, uint64_t time);
+extern void voice_sample(uint64_t time, unsigned long nframes, float *outbuffer);
 
 /* This routine will be called by the PortAudio engine when audio is needed.
 ** It may called at interrupt level on some machines so don't do anything
@@ -186,58 +186,17 @@ static int patestCallback(__attribute__ ((unused)) const void *inputBuffer,
 	__attribute__ ((unused)) PaStreamCallbackFlags statusFlags,
 	__attribute__ ((unused)) void *userData )
 {
-	unsigned int i, j;
+	unsigned int i;
 	int sample, count;
-	float *out = NULL;
+	float *out;
 	float output;
-	out = (float*) outputBuffer;
 	output = 0.0;
 	count = 0;
 	static uint64_t time = 0;
 
-	if (audio_paused) {
-		/* output silence when paused and
-		 * don't advance any sound slot pointers
-		 */
-		for (i = 0; i < framesPerBuffer; i++)
-			*out++ = (float) 0;
-		return 0;
-	}
-
-	for (i = 0; i < framesPerBuffer; i++) {
-		output = 0.0;
-		count = 0;
-		for (j = 0; j < max_concurrent_sounds; j++) {
-#if 0
-			if (!audio_queue[j].active ||
-				audio_queue[j].sample == NULL)
-				continue;
-			sample = i + audio_queue[j].pos;
-			count++;
-			if (sample >= audio_queue[j].nsamples) {
-				audio_queue[j].active = 0;
-				continue;
-			}
-			if (j != WWVIAUDIO_MUSIC_SLOT && sound_effects_on)
-				output += (float) audio_queue[j].sample[sample] * 0.5 / (float) (INT16_MAX);
-			else if (j == WWVIAUDIO_MUSIC_SLOT && music_playing)
-				output += (float) audio_queue[j].sample[sample] / (float) (INT16_MAX);
-#else
-			output += voice_sample(j, time + i) * 0.5f;
-#endif
-		}
-		*out++ = (float) output / 2.0f;
-        }
+	memset(outputBuffer, 0, framesPerBuffer * sizeof(float));
+	voice_sample(time, framesPerBuffer, (float *) outputBuffer);
 	time += framesPerBuffer;
-#if 0
-	for (i = 0; i < max_concurrent_sounds; i++) {
-		if (!audio_queue[i].active)
-			continue;
-		audio_queue[i].pos += framesPerBuffer;
-		if (audio_queue[i].pos >= audio_queue[i].nsamples)
-			audio_queue[i].active = 0;
-	}
-#endif
 	return 0; /* we're never finished */
 }
 
