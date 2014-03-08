@@ -111,9 +111,20 @@ void voice_sample(uint64_t time, unsigned long nframes, float *out)
 		right_output = 0.0f;
 		for (i = 0; i < MAXVOICES; i++) {
 			float t = fmodf((float) time + (float) j, (float) v[i].samples_per_period);
-
+#if 1
+			/* sin wave */
 			t = (t / (float) v[i].samples_per_period) * M_PI * 2.0f;
 			t = 0.1f * sinf(t + v[i].phase);
+#endif
+#if 0
+			/* triangle wave */
+			t = ((t / (float) v[i].samples_per_period) * 1.5f) - 0.75f;
+#endif
+#if 0
+			/* square wave */
+			t = (t > v[i].samples_per_period * 0.5) ? 0.5f : -0.5f;
+#endif
+
 			/* smooth it out */
 			if (fabs(t - v[i].lastv) > 0.02) {
 				t = v[i].lastv + 0.02 * (t - v[i].lastv);
