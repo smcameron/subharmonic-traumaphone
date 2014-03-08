@@ -44,7 +44,7 @@ struct sample_clip *make_raw_sample(int nsamples, float freq)
 
 	for (i = 0; i < nsamples; i++) {
 		angle = (float) i * freq / (float) nsamples / (2.0 * M_PI);
-		s->s[i] = triangle(angle);
+		s->s[i] = sinf(angle);
 	}
 	return s;
 }
@@ -54,7 +54,7 @@ float frequency[12 * NOCTAVES];
 
 float sin_envelope(int sample, int nsamples)
 {
-	return sin(((float) sample / (float) nsamples) * M_PI);
+	return sinf(((float) sample / (float) nsamples) * M_PI);
 }
 
 struct sample_clip *make_freq_sample(struct sample_clip *input, int nsamples, float freq)
@@ -109,7 +109,7 @@ void voice_sample(uint64_t time, unsigned long nframes, float *out)
 			float t = fmodf((float) time + (float) j, (float) v[i].samples_per_period);
 
 			t = (t / (float) v[i].samples_per_period) * M_PI * 2.0f;
-			t = 0.1f * sin(t + v[i].phase);
+			t = 0.1f * sinf(t + v[i].phase);
 			/* smooth it out */
 			if (fabs(t - v[i].lastv) > 0.02) {
 				t = v[i].lastv + 0.02 * (t - v[i].lastv);
