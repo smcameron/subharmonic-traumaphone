@@ -49,7 +49,7 @@ struct sample_clip *make_raw_sample(int nsamples, float freq)
 	return s;
 }
 
-#define NOCTAVES 8
+#define NOCTAVES 10 
 float frequency[12 * NOCTAVES];
 
 float sin_envelope(int sample, int nsamples)
@@ -148,8 +148,9 @@ static int main_da_motion_notify(GtkWidget *w, GdkEventMotion *event,
 		//r = 0.0f;
 		n = (int) (dy * 12.0f);
 		//o = (int) (((float) rand() / (float) RAND_MAX) * NOCTAVES);
-		o = i % (((int)((dx + dy) * (NOCTAVES - 1))) + 1);
-		o = 1 << o;
+		o = i % (((int)(((dx + dy) / 2.0) * (NOCTAVES - 1))) + 1);
+		if (o)
+			o = 1 << o;
 		f = frequency[n] * o + r;
 		interval = (int) (i + ((dx + dy) / 2.0f) * 6.0) % 6; 
 		if (interval >= 2)
