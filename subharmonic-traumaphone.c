@@ -127,17 +127,23 @@ static int main_da_motion_notify(GtkWidget *w, GdkEventMotion *event,
 	int i;
 	float r;
 	float f;
-	int n;
+	float dx, dy;
+	int n, o, no;
 
 	mousex = event->x;
 	mousey = event->y;
 
 	for (i = 0; i < MAXVOICES; i++) {
+		dx = (float) mousex / (float) real_screen_width;
+		dy = (float) mousey / (float) real_screen_height;
 		r = ((float) rand() / (float) RAND_MAX) * MAXFREQ * 0.05;
-		r = r * (float) mousex / (float) real_screen_width;
+		r = r * dx;
 		//r = 0.0f;
-		n = (int) (((float) mousey / (float) real_screen_height) * 12.0f * (float) (NOCTAVES - 1));
-		f = frequency[n] + r;	
+		n = (int) (dy * 12.0f);
+		//o = (int) (((float) rand() / (float) RAND_MAX) * NOCTAVES);
+		o = i % (((int)((dx + dy) * (NOCTAVES - 1))) + 1);
+		o = 1 << o;
+		f = frequency[n] * o + r;	
 		v[i].target_freq = f;
 	}
 	return 1;
