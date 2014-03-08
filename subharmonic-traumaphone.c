@@ -78,6 +78,8 @@ struct sample_clip *make_freq_sample(struct sample_clip *input, int nsamples, fl
 
 #define MAXVOICES 32 
 
+#define NVOICETYPES 3
+
 struct voice {
 	volatile float freq;
 	volatile float target_freq;
@@ -85,6 +87,7 @@ struct voice {
 	volatile int samples_per_period;
 	float lastv;
 	volatile float right, left;
+	int voice_type;
 } v[MAXVOICES];
 
 static void init_voices(void)
@@ -98,6 +101,7 @@ static void init_voices(void)
 		v[i].samples_per_period = 44100.0f / v[i].freq;
 		v[i].left = 0.5;
 		v[i].right = 0.5;
+		v[i].voice_type = i % NVOICETYPES;
 	}
 }
 
@@ -111,19 +115,23 @@ void voice_sample(uint64_t time, unsigned long nframes, float *out)
 		right_output = 0.0f;
 		for (i = 0; i < MAXVOICES; i++) {
 			float t = fmodf((float) time + (float) j, (float) v[i].samples_per_period);
-#if 1
-			/* sin wave */
-			t = (t / (float) v[i].samples_per_period) * M_PI * 2.0f;
-			t = 0.1f * sinf(t + v[i].phase);
-#endif
-#if 0
-			/* triangle wave */
-			t = ((t / (float) v[i].samples_per_period) * 1.5f) - 0.75f;
-#endif
-#if 0
-			/* square wave */
-			t = (t > v[i].samples_per_period * 0.5) ? 0.5f : -0.5f;
-#endif
+
+			switch (v[i].voice_type) {
+			case 0: /* sin wave */
+				t = (t / (float) v[i].samples_per_period) * M_PI * 2.0f;
+				t = 0.1f * sinf(t + v[i].phase);
+				break;
+			case 1: /* triangle wave */
+				t = ((t / (float) v[i].samples_per_period) * 1.0f) - 0.5f;
+				break;
+			case 2: /* square wave */
+				t = (t > v[i].samples_per_period * 0.5) ? 0.5f : -0.5f;
+				break;
+			default: /* sin wave */
+				t = (t / (float) v[i].samples_per_period) * M_PI * 2.0f;
+				t = 0.1f * sinf(t + v[i].phase);
+				break;
+			}
 
 			/* smooth it out */
 			if (fabs(t - v[i].lastv) > 0.02) {
