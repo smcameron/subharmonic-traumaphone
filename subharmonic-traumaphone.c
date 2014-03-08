@@ -84,6 +84,7 @@ struct voice {
 	float phase;
 	volatile int samples_per_period;
 	float lastv;
+	volatile float right, left;
 } v[MAXVOICES];
 
 static void init_voices(void)
@@ -95,16 +96,19 @@ static void init_voices(void)
 		v[i].target_freq = v[i].freq;
 		v[i].phase = ((float) rand() / (float) RAND_MAX) * M_PI * 2.0;
 		v[i].samples_per_period = 44100.0f / v[i].freq;
+		v[i].left = 0.5;
+		v[i].right = 0.5;
 	}
 }
 
 void voice_sample(uint64_t time, unsigned long nframes, float *out)
 {
 	int i, j;
-	float output;
+	float left_output, right_output;
 
 	for (j = 0; j < nframes; j++) {
-		output = 0.0f;
+		left_output = 0.0f;
+		right_output = 0.0f;
 		for (i = 0; i < MAXVOICES; i++) {
 			float t = fmodf((float) time + (float) j, (float) v[i].samples_per_period);
 
@@ -115,9 +119,11 @@ void voice_sample(uint64_t time, unsigned long nframes, float *out)
 				t = v[i].lastv + 0.02 * (t - v[i].lastv);
 				v[i].lastv = t;
 			}
-			output += t;
+			left_output += t * v[i].left;
+			right_output += t * v[i].right;
 		}
-		*out++ = output; 
+		*out++ = left_output; 
+		*out++ = right_output;
 	}
 }
 
@@ -149,6 +155,8 @@ static int main_da_motion_notify(GtkWidget *w, GdkEventMotion *event,
 		if (interval >= 2)
 			f = f * (float) interval / (float) (interval - 1);
 		v[i].target_freq = f;
+		v[i].right = 0.5 * (sinf(i * (dx + dy) * M_PI * 2.0) + 1.0);
+		v[i].left = 1.0 - v[i].right;
 	}
 	return 1;
 }

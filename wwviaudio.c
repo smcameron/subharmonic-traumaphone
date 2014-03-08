@@ -273,7 +273,7 @@ int wwviaudio_initialize_portaudio(int maximum_concurrent_sounds, int maximum_so
 		return -1;
 	}
 
-	outparams.channelCount = 1;                      /* mono output */
+	outparams.channelCount = 2;                      /* mono output */
 	outparams.sampleFormat = paFloat32;              /* 32 bit floating point output */
 	outparams.suggestedLatency =
 		Pa_GetDeviceInfo(outparams.device)->defaultLowOutputLatency;
