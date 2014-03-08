@@ -129,6 +129,7 @@ static int main_da_motion_notify(GtkWidget *w, GdkEventMotion *event,
 	float f;
 	float dx, dy;
 	int n, o, no;
+	int interval;
 
 	mousex = event->x;
 	mousey = event->y;
@@ -143,7 +144,10 @@ static int main_da_motion_notify(GtkWidget *w, GdkEventMotion *event,
 		//o = (int) (((float) rand() / (float) RAND_MAX) * NOCTAVES);
 		o = i % (((int)((dx + dy) * (NOCTAVES - 1))) + 1);
 		o = 1 << o;
-		f = frequency[n] * o + r;	
+		f = frequency[n] * o + r;
+		interval = (int) (i + ((dx + dy) / 2.0f) * 6.0) % 6; 
+		if (interval >= 2)
+			f = f * (float) interval / (float) (interval - 1);
 		v[i].target_freq = f;
 	}
 	return 1;
