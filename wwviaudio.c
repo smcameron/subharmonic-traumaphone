@@ -186,12 +186,6 @@ static int patestCallback(__attribute__ ((unused)) const void *inputBuffer,
 	__attribute__ ((unused)) PaStreamCallbackFlags statusFlags,
 	__attribute__ ((unused)) void *userData )
 {
-	unsigned int i;
-	int sample, count;
-	float *out;
-	float output;
-	output = 0.0;
-	count = 0;
 	static uint64_t time = 0;
 
 	memset(outputBuffer, 0, framesPerBuffer * sizeof(float));

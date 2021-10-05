@@ -153,7 +153,7 @@ static int main_da_motion_notify(GtkWidget *w, GdkEventMotion *event,
 	float r;
 	float f;
 	float dx, dy;
-	int n, o, no;
+	int n, o;
 	int interval;
 
 	mousex = event->x;
@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
 	int i, o;
 	float twelfth_root_of_two = 1.05946309436;
 	float samples, f, of = 27.5f;
-	struct sample_clip *k = make_raw_sample(5000, 440);
+	// struct sample_clip *k = make_raw_sample(5000, 440);
 	GtkWidget *window, *vbox, *main_da;
 	GdkGC *gc = NULL;               /* our graphics context. */
 	gint timer_tag;
@@ -244,6 +244,7 @@ int main(int argc, char *argv[])
         gtk_widget_modify_bg(main_da, GTK_STATE_NORMAL, &black);
 
 	gc = gdk_gc_new(GTK_WIDGET(main_da)->window);
+	(void) gc; /* suppress gcc warning */
 #ifndef GLIB_VERSION_2_32
 	/* this is only needed in glibc versions before 2.32 */
 
@@ -254,6 +255,7 @@ int main(int argc, char *argv[])
 		g_thread_init(NULL);
 #endif
 	timer_tag = g_timeout_add(1000 / frame_rate_hz, advance_game, NULL);
+	(void) timer_tag; /* suppress gcc warning */
 
 	gdk_threads_init();
 	gtk_main();
