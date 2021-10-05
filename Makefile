@@ -76,6 +76,6 @@ subharmonic-traumaphone:	subharmonic-traumaphone.o
 	gcc ${OPTIMIZEFLAG} ${GTKCFLAGS} -o subharmonic-traumaphone -lm subharmonic-traumaphone.o wwviaudio.o ogg_to_pcm.o ${SNDLIBS} ${GTKLDFLAGS}
 
 
-	
-
+clean:
+	rm -f subharmonic-traumaphone *.o
 
