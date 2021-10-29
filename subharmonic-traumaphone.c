@@ -244,6 +244,10 @@ int main(int argc, char *argv[])
         gtk_widget_modify_bg(main_da, GTK_STATE_NORMAL, &black);
 
 	gc = gdk_gc_new(GTK_WIDGET(main_da)->window);
+
+    g_signal_connect (window, "destroy",
+                  G_CALLBACK (gtk_main_quit), NULL);
+
 	(void) gc; /* suppress gcc warning */
 #ifndef GLIB_VERSION_2_32
 	/* this is only needed in glibc versions before 2.32 */
@@ -259,7 +263,6 @@ int main(int argc, char *argv[])
 
 	gdk_threads_init();
 	gtk_main();
-	sleep(5);
 
 	wwviaudio_cancel_all_sounds();
 	wwviaudio_stop_portaudio();
